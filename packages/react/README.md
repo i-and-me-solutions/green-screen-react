@@ -4,7 +4,7 @@ Multi-protocol legacy terminal React component. Connects to **TN5250** (IBM i / 
 
 [**Live Preview**](https://visionbridge-solutions.github.io/green-screen-react/)
 
-> **v1.3.x**: pluggable `theme` (`'modern' | 'classic'`) and `header` props, `autoConnect` / `persistFocus` / `alwaysFocused` for embedding control, popup (WDSF / `CREATE_WINDOW`) rendering, optimistic cursor/key-lock updates, and proxy robustness fixes (Timing Mark keep-alive, graceful `SIGNOFF`, STRSQL field parsing). See the v1.3.0 props below.
+> **v1.7.1**: added the `alwaysCursor` prop for rendering the cursor on any row, including rows outside detected input fields. The terminal now documents the current React package release and its cursor behavior.
 >
 > **v1.2.0**: per-field MDT state, `readMdt()` for cheap post-write verification, pluggable session store with `session.lost`/`session.resumed` lifecycle events, lower-level sign-on primitives. Python integrators can use the [`green-screen-client`](https://pypi.org/project/green-screen-client/) PyPI package.
 
@@ -161,6 +161,7 @@ The proxy keeps the TCP connection alive across WebSocket drops within its idle 
 | `header` | `ReactNode \| ((state) => ReactNode) \| false` | default | **v1.3.0** — fully pluggable header. Pass a node, a render function receiving terminal state, or `false` to hide. |
 | `persistFocus` | `boolean` | `true` | **v1.3.0** — steer keyboard focus back to the terminal when focus is lost to non-form elements. |
 | `alwaysFocused` | `boolean` | `false` | **v1.3.0** — aggressively reclaim focus; disables click-outside unfocus. Useful for full-page embeds. |
+| `alwaysCursor` | `boolean` | `false` | **v1.7.1** — render the cursor on any row, not only inside detected input fields. Useful when the host screen uses cursor positions outside input fields. |
 | `embedded` | `boolean` | `false` | Compact embedded mode |
 | `showHeader` | `boolean` | `true` | Show header bar |
 | `bootLoader` | `ReactNode \| false` | default | Custom boot loader |
