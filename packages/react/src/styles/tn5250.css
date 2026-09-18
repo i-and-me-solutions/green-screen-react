@@ -189,6 +189,18 @@
 .gs-screen-content {
   padding: 8px 12px;
   flex-shrink: 0;
+  line-height: 1;
+  white-space: pre;
+}
+
+.gs-screen-content,
+.gs-screen-content * {
+  vertical-align: top;
+}
+
+.gs-row-line {
+  display: flex;
+  align-items: center;
 }
 
 /* ── Cursor ───────────────────────────────────────────────────────── */
@@ -229,6 +241,10 @@
 .gs-input-field {
   display: inline-block;
   position: relative;
+  vertical-align: top;
+  height: 21px;
+  line-height: 21px;
+  box-sizing: border-box;
   border-bottom: 1px dotted rgba(166, 227, 161, 0.5);
 }
 

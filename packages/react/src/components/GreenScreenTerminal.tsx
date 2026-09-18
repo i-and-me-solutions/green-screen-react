@@ -159,11 +159,11 @@ export interface GreenScreenTerminalProps {
    *  Mirrors the behaviour of native IBM i clients like ACS. Default: false. */
   alwaysCursor?: boolean;
 
-  /** Built-in visual theme preset. Applied as a `gs-theme-*` class on the
-   *  root `.gs-terminal` element so CSS variables resolve to theme-specific
-   *  values. Integrators can also override individual CSS variables directly
-   *  on a parent element for fully custom palettes. Default: 'modern'. */
-  theme?: 'modern' | 'classic';
+  /** Built-in visual theme preset. Applied to the root `.gs-terminal` element
+   *  so CSS variables resolve to theme-specific values. Integrators can also
+   *  override individual CSS variables directly on a parent element for fully
+   *  custom palettes. Default: 'modern'. */
+  theme?: 'modern' | 'classic' | 'lightman' | 'lightman-light';
 
   /** Additional CSS class name */
   className?: string;
@@ -241,6 +241,12 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
   style,
 }: GreenScreenTerminalProps, ref: React.ForwardedRef<GreenScreenTerminalHandle>) {
   const profile = customProfile ?? getProtocolProfile(protocol);
+  const themeClasses = {
+    modern: 'gs-theme-modern',
+    classic: 'gs-theme-classic',
+    lightman: 'lightman-terminal-theme',
+    'lightman-light': 'lightman-terminal-theme lightman-terminal-theme--light',
+  } as const;
 
   // --- Resolve adapter: explicit > baseUrl > workerUrl > default WebSocket > noop ---
   const baseUrlAdapter = useMemo(
@@ -1123,7 +1129,11 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
             style={{
               display: 'inline-block',
               width: `${fieldWidth}ch`,
+              height: '21px',
+              lineHeight: '21px',
+              verticalAlign: 'top',
               overflow: 'hidden',
+              boxSizing: 'border-box',
               ...fieldStyle,
             }}
           >
@@ -1234,7 +1244,7 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
           }
           const headerSegments = index === 0 ? profile.colors.parseHeaderRow(displayLine) : null;
           return (
-            <div key={index} className={headerSegments ? '' : profile.colors.getRowColorClass(index, displayLine, termRows)} style={{ height: `${ROW_HEIGHT}px`, lineHeight: `${ROW_HEIGHT}px`, whiteSpace: 'pre', position: 'relative' }}>
+            <div key={index} className={headerSegments ? 'gs-row-line' : `gs-row-line ${profile.colors.getRowColorClass(index, displayLine, termRows)}`} style={{ height: `${ROW_HEIGHT}px`, lineHeight: `${ROW_HEIGHT}px`, whiteSpace: 'pre', position: 'relative', display: 'flex', alignItems: 'center' }}>
               {headerSegments
                 ? headerSegments.map((seg, i) => <span key={i} className={seg.colorClass}>{seg.text}</span>)
                 : renderRowWithFields(displayLine, index, fields, cursor.row, cursor.col)}
@@ -1360,7 +1370,7 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
   }, [readOnly, runSelfCheck, sendKey]);
 
   return (
-    <div ref={containerRef} className={`gs-terminal gs-theme-${theme} ${isFocused ? 'gs-terminal-focused' : ''} ${className || ''}`} style={style}>
+    <div ref={containerRef} className={`gs-terminal ${themeClasses[theme]} ${isFocused ? 'gs-terminal-focused' : ''} ${className || ''}`.trim()} style={style}>
       {/* Header: custom header prop takes precedence over showHeader/embedded */}
       {header !== undefined ? (
         header === false ? null :
