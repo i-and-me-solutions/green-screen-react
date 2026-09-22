@@ -1564,39 +1564,51 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
               <span className="gs-busy-hint">Waiting for host…</span>
             </div>
           )}
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputText}
-            onChange={handleInput}
-            onKeyDown={handleKeyDown}
-            // Visually-hidden keyboard-capture field (opacity:0). It is a focus
-            // target, so it needs an accessible name rather than aria-hidden —
-            // otherwise screen readers announce an unlabelled textbox (WCAG 4.1.2).
-            aria-label="Terminal input"
-            style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', fontSize: '13px', lineHeight: '21px', fontFamily: 'var(--gs-font)', padding: 0, border: 'none', height: '21px' }}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            // Hint IME / mobile keyboard mode from current field metadata.
-            // DBCS fields on Japanese hosts should open the kana/kanji IME
-            // so the user can compose full-width text directly.
-            lang={(() => {
-              const f = getCurrentField();
-              if (!f) return undefined;
-              if ((f as any).is_dbcs || (f as any).is_dbcs_either) return 'ja';
-              return undefined;
-            })()}
-            inputMode={(() => {
-              const f = getCurrentField();
-              if (!f) return undefined;
-              if ((f as any).is_dbcs) return 'text';
-              // Numeric-only shift types (SHIFT_NUMERIC_ONLY 0x03, DIGITS_ONLY 0x05, SIGNED_NUM 0x07)
-              // are not exposed on Field today — but the browser mode hint is just an optimization.
-              return 'text';
-            })()}
-          />
+          {/* Portalled to <body> rather than rendered inline: Safari's Password
+           * AutoFill heuristic flags this field as a credential input purely
+           * because host-rendered "User"/"Password" prompt text sits nearby
+           * in the DOM (no <form>/type=password involved). Moving it out of
+           * that DOM subtree removes the proximity signal Safari keys on. */}
+          {typeof document !== 'undefined' && createPortal((
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputText}
+              onChange={handleInput}
+              onKeyDown={handleKeyDown}
+              // Visually-hidden keyboard-capture field (opacity:0). It is a focus
+              // target, so it needs an accessible name rather than aria-hidden —
+              // otherwise screen readers announce an unlabelled textbox (WCAG 4.1.2).
+              aria-label="Terminal input"
+              name="gs-terminal-keys"
+              style={{ position: 'fixed', top: 0, left: 0, opacity: 0, pointerEvents: 'none', fontSize: '13px', lineHeight: '21px', fontFamily: 'var(--gs-font)', padding: 0, border: 'none', height: '21px' }}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              data-1p-ignore
+              data-lpignore="true"
+              data-bwignore
+              data-form-type="other"
+              // Hint IME / mobile keyboard mode from current field metadata.
+              // DBCS fields on Japanese hosts should open the kana/kanji IME
+              // so the user can compose full-width text directly.
+              lang={(() => {
+                const f = getCurrentField();
+                if (!f) return undefined;
+                if ((f as any).is_dbcs || (f as any).is_dbcs_either) return 'ja';
+                return undefined;
+              })()}
+              inputMode={(() => {
+                const f = getCurrentField();
+                if (!f) return undefined;
+                if ((f as any).is_dbcs) return 'text';
+                // Numeric-only shift types (SHIFT_NUMERIC_ONLY 0x03, DIGITS_ONLY 0x05, SIGNED_NUM 0x07)
+                // are not exposed on Field today — but the browser mode hint is just an optimization.
+                return 'text';
+              })()}
+            />
+          ), document.body)}
         </div>
       </div>
     </div>
