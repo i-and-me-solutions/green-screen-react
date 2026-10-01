@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import type { TerminalAdapter, ScreenData, ConnectionStatus, SendResult, ConnectConfig } from '../adapters/types';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ConnectConfig, ConnectionStatus, ScreenData, SendResult, TerminalAdapter } from '../adapters/types';
 
 /**
  * Hook for terminal connection management via adapter.
@@ -92,11 +92,6 @@ export function useTerminalScreen(
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!enabled) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      return;
-    }
-
     const poll = async () => {
       try {
         const screen = await adapter.getScreen();
@@ -107,14 +102,20 @@ export function useTerminalScreen(
       }
     };
 
-    poll(); // Initial fetch
-    intervalRef.current = setInterval(poll, interval);
-
-    // Subscribe to pushed updates if the adapter supports them.
+    // Subscribe to pushed updates if the adapter supports them. Push-only
+    // adapters run with `enabled` false (pollInterval 0) and would otherwise
+    // never receive a screen at all.
     const unsubscribe = adapter.onScreen?.((screen) => {
       setData(screen);
       setError(null);
     });
+
+    // Catches up a push adapter that already emitted before this subscription.
+    if (enabled || unsubscribe) poll();
+
+    if (enabled) {
+      intervalRef.current = setInterval(poll, interval);
+    }
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -137,7 +138,8 @@ export function useTerminalInput(adapter: TerminalAdapter) {
     setError(null);
     try {
       const result = await adapter.sendText(text);
-      return { ...result, success: true };
+      if (!result.success && result.error) setError(result.error);
+      return result;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
@@ -152,7 +154,8 @@ export function useTerminalInput(adapter: TerminalAdapter) {
     setError(null);
     try {
       const result = await adapter.sendKey(key);
-      return { ...result, success: true };
+      if (!result.success && result.error) setError(result.error);
+      return result;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);

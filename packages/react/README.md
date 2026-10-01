@@ -75,6 +75,50 @@ const adapter = new RestAdapter({
 });
 ```
 
+### LightmanAdapter
+
+For the Lightman Router API, which exchanges whole screens over a single JSON
+endpoint instead of a per-keystroke channel.
+
+```tsx
+import { LightmanAdapter } from 'green-screen-react';
+
+const adapter = new LightmanAdapter({
+  routerUrl: '/api/lightman/router',
+  uiKey: 'terminal',
+  user: 'lmn',
+});
+
+<GreenScreenTerminal
+  adapter={adapter}
+  protocol="tn5250"
+  pollInterval={0}
+  inlineSignIn={false}
+/>
+```
+
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `routerUrl` | `/api/lightman/router` | Router endpoint |
+| `uiKey` | `'terminal'` | UI key for `LIGHTMAL.open` |
+| `user` | – | User for `LIGHTMAL.open` |
+| `lightmanId` | – | Resumes a session via `LIGHTMAL.get` instead of opening one |
+| `sourceId` | first terminal source | Binds the adapter to one source |
+| `fieldKeyStrategy` | `'indexName'` | Which field property keys a write's `data` object |
+| `pollIntervalMs` | `0` | Polls `LIGHTMAL.get` for host-driven changes |
+| `headers` | – | Extra request headers |
+| `fetchImpl` | `globalThis.fetch` | Injectable transport, for tests |
+| `onLightmanIdChange` | – | Receives the session id |
+| `onRequest` | – | Observes every router round-trip |
+
+Typing is applied to a local screen buffer; only an AID key (`ENTER`, `F1`–`F24`)
+triggers a `LIGHTMAL.write` carrying the modified fields. Updates are pushed
+through `onScreen`, so mount with `pollInterval={0}`. Sources reported as
+`modernizedUI` are rendered read-only.
+
+See [docs/lightman-adapter.md](../../docs/lightman-adapter.md) for the field
+mapping, key handling and open questions.
+
 ### Custom Adapter
 
 Implement `TerminalAdapter` to connect to any backend:

@@ -56,8 +56,9 @@ packages/
   client-py/   → green-screen-client     (PyPI)  Python async client
                                                  (ships independently)
 apps/
-  demo/      Example Vite app
-  worker/    Cloudflare Worker deployment
+  demo/           Example Vite app
+  lightman-demo/  Lightman Router API harness (npm run dev:lightman, port 5174)
+  worker/         Cloudflare Worker deployment
 ```
 
 ## Features

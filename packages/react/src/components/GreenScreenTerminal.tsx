@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { TerminalAdapter, ScreenData, ConnectionStatus, Field, TerminalProtocol, ProtocolProfile, ConnectConfig } from '../adapters/types';
 import { RestAdapter } from '../adapters/RestAdapter';
+import type { ConnectConfig, ConnectionStatus, Field, ProtocolProfile, ScreenData, TerminalAdapter, TerminalProtocol } from '../adapters/types';
 import { WebSocketAdapter } from '../adapters/WebSocketAdapter';
 import { useAutoReconnect } from '../hooks/useAutoReconnect';
 import { useTerminalState } from '../hooks/useTerminalState';
 import { getProtocolProfile } from '../protocols/registry';
-import { TerminalBootLoader as DefaultBootLoader } from './TerminalBootLoader';
-import { TerminalIcon, WifiIcon, WifiOffIcon, AlertTriangleIcon, RefreshIcon, KeyIcon, MinimizeIcon, KeyboardIcon, UnplugIcon } from './Icons';
-import { InlineSignIn } from './InlineSignIn';
-import { decodeAttrByte, decodeExtColor, decodeExtHighlight, cssVarForColor, mergeExtAttr, extColorIsReverse } from '../utils/attribute';
-import { validateMod10, validateMod11, filterFieldInput } from '../utils/validation';
+import { cssVarForColor, decodeAttrByte, decodeExtColor, decodeExtHighlight, extColorIsReverse } from '../utils/attribute';
 import { fieldSliceForRow } from '../utils/fieldSlice';
+import { filterFieldInput, validateMod10, validateMod11 } from '../utils/validation';
+import { AlertTriangleIcon, KeyboardIcon, KeyIcon, MinimizeIcon, RefreshIcon, TerminalIcon, UnplugIcon, WifiIcon, WifiOffIcon } from './Icons';
+import { InlineSignIn } from './InlineSignIn';
+import { TerminalBootLoader as DefaultBootLoader } from './TerminalBootLoader';
 
 /** Format milliseconds as M:SS for the X CLOCK busy indicator. */
 function formatBusyClock(ms: number): string {
@@ -614,7 +614,7 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
     const clickedCol = Math.floor(x / charWidth);
 
     if (clickedRow < 0 || clickedRow >= (screenData.rows || 24) ||
-        clickedCol < 0 || clickedCol >= (screenData.cols || 80)) return;
+      clickedCol < 0 || clickedCol >= (screenData.cols || 80)) return;
 
     // Pointer AID (FCW 0x8Axx): if the clicked field declares a pointer AID,
     // send it as a key press and skip the normal cursor-move. Per IBM 5250
@@ -871,6 +871,17 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
         setSyncedCursor({ row: curRow, col: curCol + newChars.length });
         // Send to proxy in background (cursor-only response)
         sendText(newChars).then(r => {
+          if (!r.success) {
+            // Roll back: an adapter that rejects input sends no corrective
+            // screen, so the optimistic characters would linger forever.
+            setOptimisticEdits(prev => prev.filter(e => !edits.includes(e)));
+            setSyncedCursor({ row: curRow, col: curCol });
+            if (r.error) {
+              setValidationError(r.error);
+              setTimeout(() => setValidationError(null), 1500);
+            }
+            return;
+          }
           if (r.cursor_row !== undefined) setSyncedCursor({ row: r.cursor_row, col: r.cursor_col! });
         });
       }
@@ -1364,15 +1375,15 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
       {/* Header: custom header prop takes precedence over showHeader/embedded */}
       {header !== undefined ? (
         header === false ? null :
-        typeof header === 'function' ? header({
-          connectionStatus: connStatus,
-          keyboardLocked: !!screenData?.keyboard_locked || optimisticLock,
-          insertMode: !!screenData?.insert_mode,
-          isFocused,
-          reconnect: handleReconnect,
-          reconnecting: reconnecting || isAutoReconnecting,
-        }) :
-        header
+          typeof header === 'function' ? header({
+            connectionStatus: connStatus,
+            keyboardLocked: !!screenData?.keyboard_locked || optimisticLock,
+            insertMode: !!screenData?.insert_mode,
+            isFocused,
+            reconnect: handleReconnect,
+            reconnecting: reconnecting || isAutoReconnecting,
+          }) :
+            header
       ) : showHeader ? (
         <div className="gs-header">
           {embedded ? (
@@ -1493,20 +1504,20 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
               </div>
               <div className="gs-shortcuts-actions">
                 {([
-                  ['Enter',      'Submit',       'ENTER'],
-                  ['Tab',        'Next field',   'TAB'],
-                  ['Backspace',  'Backspace',    'BACKSPACE'],
-                  ['Delete',     'Delete',       'DELETE'],
-                  ['Insert',     'Ins / Ovr',    'INSERT'],
-                  ['Home',       'Home',         'HOME'],
-                  ['End',        'End',          'END'],
-                  ['PgUp',       'Roll Down',    'PAGEUP'],
-                  ['PgDn',       'Roll Up',      'PAGEDOWN'],
-                  ['Ctrl+Ent',   'Field Exit',   'FIELD_EXIT'],
-                  ['Ctrl+R',     'Reset',        'RESET'],
-                  ['—',          'Help',         'HELP'],
-                  ['—',          'Clear',        'CLEAR'],
-                  ['—',          'Print',        'PRINT'],
+                  ['Enter', 'Submit', 'ENTER'],
+                  ['Tab', 'Next field', 'TAB'],
+                  ['Backspace', 'Backspace', 'BACKSPACE'],
+                  ['Delete', 'Delete', 'DELETE'],
+                  ['Insert', 'Ins / Ovr', 'INSERT'],
+                  ['Home', 'Home', 'HOME'],
+                  ['End', 'End', 'END'],
+                  ['PgUp', 'Roll Down', 'PAGEUP'],
+                  ['PgDn', 'Roll Up', 'PAGEDOWN'],
+                  ['Ctrl+Ent', 'Field Exit', 'FIELD_EXIT'],
+                  ['Ctrl+R', 'Reset', 'RESET'],
+                  ['—', 'Help', 'HELP'],
+                  ['—', 'Clear', 'CLEAR'],
+                  ['—', 'Print', 'PRINT'],
                 ] as const).map(([label, desc, key]) => (
                   <div key={key} className="gs-shortcut-action" onClick={(e) => { e.stopPropagation(); handleShortcutSend(key); }}>
                     <span className="gs-shortcut-key">{label}</span>
