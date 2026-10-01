@@ -1,4 +1,4 @@
-import type { Field, FieldColor, ScreenData, SelectionField, Window } from 'green-screen-types';
+import type { CellExtAttr, Field, FieldColor, ScreenData, SelectionField, Window } from 'green-screen-types';
 import type { LightmanField, LightmanScreen, LightmanSource } from './types';
 
 const FIELD_COLORS = new Set<string>([
@@ -9,6 +9,16 @@ const SHIFT_TYPES = new Set<string>([
     'alpha', 'alpha_only', 'numeric_shift', 'numeric_only',
     'katakana', 'digits_only', 'io', 'signed_num',
 ]);
+
+const EXT_COLOR_CODES: Record<string, number> = {
+    green: 0,
+    blue: 1,
+    red: 2,
+    pink: 3,
+    turquoise: 4,
+    yellow: 5,
+    white: 6,
+};
 
 const DEFAULT_ROWS = 24;
 const DEFAULT_COLS = 80;
@@ -108,13 +118,48 @@ function toSelectionFields(screen: LightmanScreen): SelectionField[] | undefined
     return choices !== undefined && choices.length > 0 ? choices : undefined;
 }
 
+function toExtendedAttributes(screen: LightmanScreen, rows: number, cols: number): Record<number, CellExtAttr> | undefined {
+    const spans = screen.planes?.spans;
+    if (spans === undefined || spans.length === 0) return undefined;
+
+    const attributes: Record<number, CellExtAttr> = {};
+    for (const span of spans) {
+        if (span.row < 0 || span.row >= rows || span.col < 0 || span.length <= 0) continue;
+
+        const background = span.bg_color?.toLowerCase();
+        const foreground = span.color?.toLowerCase();
+        let color: number | undefined;
+        if (background !== undefined && background !== 'black' && EXT_COLOR_CODES[background] !== undefined) {
+            color = EXT_COLOR_CODES[background] | 0x08;
+        } else if (foreground !== undefined && foreground !== 'black') {
+            color = EXT_COLOR_CODES[foreground];
+        }
+
+        let highlight = 0;
+        if (span.is_underscored) highlight |= 0x01;
+        if (span.is_reverse) highlight |= 0x02;
+        if (span.is_blink) highlight |= 0x04;
+        if (span.is_column_separator) highlight |= 0x08;
+
+        const startCol = Math.max(0, span.col);
+        const endCol = Math.min(cols, span.col + span.length);
+        for (let col = startCol; col < endCol; col++) {
+            const attr: CellExtAttr = {};
+            if (color !== undefined) attr.color = color;
+            if (highlight > 0) attr.highlight = highlight;
+            if (Object.keys(attr).length > 0) attributes[span.row * cols + col] = attr;
+        }
+    }
+
+    return Object.keys(attributes).length > 0 ? attributes : undefined;
+}
+
 /**
  * Normalizes any `sources` entry of `LIGHTMAL.open`, `.get` or `.write` into the
  * canonical green-screen `ScreenData`.
  *
- * Deliberately unmapped: `screen_meta.activeAidKeys` (observed to go stale
- * across screen transitions) and `planes.spans` (string colors that do not
- * translate to the numeric `CellExtAttr` bytes).
+ * `planes.spans` are expanded to per-cell extended attributes so residual
+ * background-color art survives the conversion.
  */
 export function toScreenData(source: LightmanSource): ScreenData {
     const screen = unwrapScreen(source);
@@ -150,6 +195,9 @@ export function toScreenData(source: LightmanSource): ScreenData {
 
     const selectionFields = toSelectionFields(screen);
     if (selectionFields !== undefined) data.selection_fields = selectionFields;
+
+    const extAttrs = toExtendedAttributes(screen, rows, cols);
+    if (extAttrs !== undefined) data.ext_attrs = extAttrs;
 
     return data;
 }
