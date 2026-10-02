@@ -4,6 +4,8 @@ Multi-protocol legacy terminal React component. Connects to **TN5250** (IBM i / 
 
 [**Live Preview**](https://visionbridge-solutions.github.io/green-screen-react/)
 
+> **v1.8.0**: lightman adapter added for the Lightman Router API.
+
 > **v1.7.1**: added the `alwaysCursor` prop for rendering the cursor on any row, including rows outside detected input fields. The terminal now documents the current React package release and its cursor behavior.
 >
 > **v1.2.0**: per-field MDT state, `readMdt()` for cheap post-write verification, pluggable session store with `session.lost`/`session.resumed` lifecycle events, lower-level sign-on primitives. Python integrators can use the [`green-screen-client`](https://pypi.org/project/green-screen-client/) PyPI package.
