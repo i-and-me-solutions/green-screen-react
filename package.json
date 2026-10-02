@@ -7,10 +7,12 @@
     "packages/proxy",
     "packages/standalone",
     "apps/demo",
+    "apps/lightman-demo",
     "apps/worker"
   ],
   "scripts": {
-    "dev": "concurrently --kill-others -n proxy,demo -c blue,green \"node --watch --import tsx/esm packages/proxy/src/server.ts\" \"cd apps/demo && npx vite\""
+    "dev": "concurrently --kill-others -n proxy,demo -c blue,green \"node --watch --import tsx/esm packages/proxy/src/server.ts\" \"cd apps/demo && npx vite\"",
+    "dev:lightman": "cd apps/lightman-demo && npx vite"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"
