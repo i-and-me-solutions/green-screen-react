@@ -1062,6 +1062,13 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
             style.color = '#000';
           }
           if (hl?.reverse) { style.background = 'currentColor'; style.color = '#000'; }
+          if (style.background) {
+            style.display = 'inline-block';
+            style.minWidth = '1ch';
+            style.height = '21px';
+            style.lineHeight = '21px';
+            style.verticalAlign = 'top';
+          }
           if (hl?.underscore) style.textDecoration = 'underline';
           if (hl?.blink) (style as any).animation = 'gs-blink 1s steps(2, start) infinite';
           segs.push(

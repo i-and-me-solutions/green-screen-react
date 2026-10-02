@@ -136,7 +136,6 @@ function toExtendedAttributes(screen: LightmanScreen, rows: number, cols: number
         }
 
         let highlight = 0;
-        if (span.is_underscored) highlight |= 0x01;
         if (span.is_reverse) highlight |= 0x02;
         if (span.is_blink) highlight |= 0x04;
         if (span.is_column_separator) highlight |= 0x08;
