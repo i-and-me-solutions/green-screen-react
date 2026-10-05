@@ -1312,11 +1312,6 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
             {validationError} — click to dismiss
           </div>
         )}
-        {screenData.cursor_row !== undefined && screenData.cursor_col !== undefined && (
-          <span style={{ position: 'absolute', bottom: 0, right: 0, fontFamily: 'var(--gs-font)', fontSize: '10px', color: 'var(--gs-muted, #6c7086)', pointerEvents: 'none', opacity: 0.6 }}>
-            {String(screenData.cursor_row + 1).padStart(2, '0')}/{String(screenData.cursor_col + 1).padStart(3, '0')}
-          </span>
-        )}
       </div>
     );
   };
@@ -1368,6 +1363,8 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
     const kr = await sendKey(key);
     if (kr.cursor_row !== undefined) setSyncedCursor({ row: kr.cursor_row, col: kr.cursor_col! });
   }, [readOnly, runSelfCheck, sendKey]);
+
+  const statusCursor = getCursorPos();
 
   return (
     <div ref={containerRef} className={`gs-terminal ${themeClasses[theme]} ${isFocused ? 'gs-terminal-focused' : ''} ${className || ''}`.trim()} style={style}>
@@ -1479,6 +1476,18 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
             </div>
           )}
           <div ref={screenContentRef} className="gs-screen-content">{renderScreen()}</div>
+          {screenData?.content && (
+            <div className="gs-status-line" role="status" aria-label="Terminal status">
+              <span className="gs-status-position">
+                ROW {String(statusCursor.row + 1).padStart(2, '0')} COL {String(statusCursor.col + 1).padStart(3, '0')}
+              </span>
+              {(screenData.keyboard_locked || optimisticLock) && <span className="gs-status-badge gs-status-badge--locked" title="Keyboard locked by host">X II</span>}
+              {screenData.message_waiting && <span className="gs-status-badge gs-status-badge--message" title="Message waiting">MSG</span>}
+              {screenData.alarm && <span className="gs-status-badge gs-status-badge--alarm" title="Host alarm">ALARM</span>}
+              {screenData.insert_mode && <span className="gs-status-badge gs-status-badge--insert" title="Insert mode">INS</span>}
+              {(screenData.is_popup || (screenData.screen_stack_depth ?? 0) > 0) && <span className="gs-status-badge" title="Popup window active">POPUP</span>}
+            </div>
+          )}
           {overlay}
           {showShortcuts && typeof document !== 'undefined' && createPortal((
             <div
