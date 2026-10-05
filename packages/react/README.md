@@ -2,7 +2,7 @@
 
 Multi-protocol legacy terminal React component. Connects to **TN5250** (IBM i / AS/400), **TN3270** (z/OS mainframe), **VT220** (OpenVMS, Unix), and **HP 6530** (NonStop) hosts.
 
-[**Live Preview**](https://visionbridge-solutions.github.io/green-screen-react/)
+> **v1.9.0**: added a terminal status bar with cursor position and host indicators, plus the `showStatus` prop to toggle it. Optimistic keyboard-lock feedback now yields to incoming screen snapshots even when screen text is unchanged.
 
 > **v1.8.0**: lightman adapter added for the Lightman Router API.
 
@@ -210,6 +210,7 @@ The proxy keeps the TCP connection alive across WebSocket drops within its idle 
 | `alwaysCursor` | `boolean` | `false` | **v1.7.1** — render the cursor on any row, not only inside detected input fields. Useful when the host screen uses cursor positions outside input fields. |
 | `embedded` | `boolean` | `false` | Compact embedded mode |
 | `showHeader` | `boolean` | `true` | Show header bar |
+| `showStatus` | `boolean` | `true` | Show the status bar below the terminal screen |
 | `bootLoader` | `ReactNode \| false` | default | Custom boot loader |
 | `onSignIn` | `(config) => void` | - | Sign-in callback |
 | `onScreenChange` | `(screen) => void` | - | Screen change callback |
