@@ -20,6 +20,7 @@ export default function App() {
     const [error, setError] = useState<string | null>(null)
     const [exchanges, setExchanges] = useState<RouterExchange[]>([])
     const [showDebug, setShowDebug] = useState(true)
+    const [showStatus, setShowStatus] = useState(true)
     const [lightmanId, setLightmanId] = useState<string | null>(null)
     const hasConnected = useRef(false)
 
@@ -68,6 +69,14 @@ export default function App() {
                 <span className={`lightman-badge${connected ? ' lightman-badge--on' : ''}`}>
                     {connected ? 'connected' : 'connecting…'}
                 </span>
+                <button
+                    type="button"
+                    className="lightman-status-toggle"
+                    aria-pressed={showStatus}
+                    onClick={() => setShowStatus((visible) => !visible)}
+                >
+                    Statusleiste {showStatus ? 'ausblenden' : 'anzeigen'}
+                </button>
             </header>
 
             {error !== null && <p className="lightman-error">{error}</p>}
@@ -81,6 +90,7 @@ export default function App() {
                     inlineSignIn={false}
                     bootLoader={false}
                     header={false}
+                    showStatus={showStatus}
                     alwaysFocused
                     alwaysCursor
                     connectionStatus={{

@@ -376,6 +376,7 @@
 }
 
 .gs-status-position {
+  margin-left: auto;
   font-variant-numeric: tabular-nums;
 }
 

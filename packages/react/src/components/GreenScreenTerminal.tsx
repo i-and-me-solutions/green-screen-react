@@ -95,6 +95,8 @@ export interface GreenScreenTerminalProps {
   embedded?: boolean;
   /** Show the header bar (default true) */
   showHeader?: boolean;
+  /** Show the terminal status bar below the screen (default true) */
+  showStatus?: boolean;
   /** Custom header: ReactNode, render prop with terminal state, or false to hide.
    *  When provided, overrides showHeader/embedded/headerRight/statusActions. */
   header?: React.ReactNode | ((state: TerminalHeaderState) => React.ReactNode) | false;
@@ -216,6 +218,7 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
   maxReconnectAttempts: maxAttempts = 5,
   embedded = false,
   showHeader = true,
+  showStatus = true,
   header,
   autoConnect = true,
   inlineSignIn = true,
@@ -330,8 +333,8 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
   const [syncedCursor, setSyncedCursor] = useState<{ row: number; col: number } | null>(null);
   // Optimistic keyboard lock — set instantly when the user presses a submit
   // key (Enter/F-key/PageUp/PageDown) so the X II badge appears without
-  // waiting for the proxy's round-trip. Cleared when rawScreenData content
-  // changes (meaning the proxy has responded with a new screen).
+  // waiting for the host round-trip. Clear it on the next authoritative screen
+  // snapshot, even if only keyboard_locked changed and screen content did not.
   const [optimisticLock, setOptimisticLock] = useState(false);
   const prevRawContentRef = useRef('');
 
@@ -340,10 +343,13 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
     if (prevRawContentRef.current && newContent && newContent !== prevRawContentRef.current) {
       setSyncedCursor(null);
       setInputText('');
-      setOptimisticLock(false);
     }
     prevRawContentRef.current = newContent;
   }, [rawScreenData?.content]);
+
+  useEffect(() => {
+    if (rawScreenData) setOptimisticLock(false);
+  }, [rawScreenData]);
 
   // --- Auto-reconnect ---
   const {
@@ -1494,16 +1500,16 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
             </div>
           )}
           <div ref={screenContentRef} className="gs-screen-content">{renderScreen()}</div>
-          {screenData?.content && (
+          {showStatus && screenData?.content && (
             <div className="gs-status-line" role="status" aria-label="Terminal status">
-              <span className="gs-status-position">
-                ROW {String(statusCursor.row + 1).padStart(2, '0')} COL {String(statusCursor.col + 1).padStart(3, '0')}
-              </span>
               {(screenData.keyboard_locked || optimisticLock) && <span className="gs-status-badge gs-status-badge--locked" title="Keyboard locked by host">X II</span>}
               {screenData.message_waiting && <span className="gs-status-badge gs-status-badge--message" title="Message waiting">MSG</span>}
               {screenData.alarm && <span className="gs-status-badge gs-status-badge--alarm" title="Host alarm">ALARM</span>}
               {screenData.insert_mode && <span className="gs-status-badge gs-status-badge--insert" title="Insert mode">INS</span>}
               {(screenData.is_popup || (screenData.screen_stack_depth ?? 0) > 0) && <span className="gs-status-badge" title="Popup window active">POPUP</span>}
+              <span className="gs-status-position">
+                {String(statusCursor.row + 1).padStart(2, '0')}/{String(statusCursor.col + 1).padStart(3, '0')}
+              </span>
             </div>
           )}
           {overlay}
