@@ -2,6 +2,8 @@
 
 Multi-protocol legacy terminal React component. Connects to **TN5250** (IBM i / AS/400), **TN3270** (z/OS mainframe), **VT220** (OpenVMS, Unix), and **HP 6530** (NonStop) hosts.
 
+> **v1.10.0**: Sending F13 to F24 keys is now possible by using Shift to increase the pressed Function key by 12 (for example Shift+F1=F13) mimicking ACS behavior
+
 > **v1.9.0**: added a terminal status bar with cursor position and host indicators, plus the `showStatus` prop to toggle it. Optimistic keyboard-lock feedback now yields to incoming screen snapshots even when screen text is unchanged.
 
 > **v1.8.0**: lightman adapter added for the Lightman Router API.
@@ -43,6 +45,8 @@ function App() {
 ```
 
 Connects to `localhost:3001` automatically. Use the sign-in form to connect to a real host.
+
+**Function keys:** Press `Shift+F1` through `Shift+F12` to send `F13` through `F24`.
 
 ## Adapters
 

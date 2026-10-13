@@ -772,13 +772,20 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
     // inner regex would reject it and the handler would fall through with
     // nothing to dispatch. Making the regex the outer guard lets real
     // letter keys ('F', 'f', 'F1xyz', etc.) fall through to the text path.
-    if (/^F([1-9]|1[0-9]|2[0-4])$/.test(e.key)) {
+    const fKeyMatch = /^F([1-9]|1[0-9]|2[0-4])$/.exec(e.key);
+    if (fKeyMatch) {
       e.preventDefault();
       // Self-check any declared MOD10/MOD11 fields before submitting
       if (!runSelfCheck()) return;
       // Lock keyboard instantly so X II badge appears without waiting for proxy
       setOptimisticLock(true);
-      const kr = await sendKey(e.key);
+      // Shift+F1..F12 are the standard keyboard shortcuts for F13..F24.
+      // Leave explicit F13..F24 key events unchanged (Shift+F13 would be F25).
+      const fKeyNumber = Number(fKeyMatch[1]);
+      const functionKey = e.shiftKey && fKeyNumber <= 12
+        ? `F${fKeyNumber + 12}`
+        : e.key;
+      const kr = await sendKey(functionKey);
       if (kr.cursor_row !== undefined) setSyncedCursor({ row: kr.cursor_row, col: kr.cursor_col! });
       return;
     }
