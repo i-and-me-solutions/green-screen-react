@@ -546,7 +546,6 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
   }, []);
 
   const screenContentRef = useRef<HTMLDivElement>(null);
-  const charWidthRef = useRef<number>(0);
 
   const handleTerminalClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (readOnly) return;
@@ -568,15 +567,15 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
     const contentEl = screenContentRef.current;
     if (!contentEl || !screenData?.fields) return;
 
-    // Measure 1ch width in current font
-    if (!charWidthRef.current) {
+    const getCharWidth = function () {
       const span = document.createElement('span');
       span.style.cssText = 'position:absolute;visibility:hidden;font:inherit;white-space:pre';
       span.textContent = 'X';
       contentEl.appendChild(span);
-      charWidthRef.current = span.getBoundingClientRect().width;
+      const contentWidth = span.getBoundingClientRect().width;
       contentEl.removeChild(span);
-    }
+      return contentWidth;
+    };
 
     // .gs-screen-content has padding (12px top, 16px left). Subtract it so
     // (x, y) is measured from the first character cell, not the padded box
@@ -586,7 +585,7 @@ export const GreenScreenTerminal = forwardRef<GreenScreenTerminalHandle, GreenSc
     const cs = window.getComputedStyle(contentEl);
     const padLeft = parseFloat(cs.paddingLeft) || 0;
     const x = e.clientX - rect.left - padLeft;
-    const charWidth = charWidthRef.current;
+    const charWidth = getCharWidth();
     if (!charWidth) return;
 
     // Rows: measure the ACTUAL on-screen row pitch + origin from the rendered
